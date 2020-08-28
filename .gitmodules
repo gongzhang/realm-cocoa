@@ -2,3 +2,6 @@
 	path = Realm/ObjectStore
 	url = https://github.com/realm/realm-object-store.git
 	branch = master
+[submodule "realm-core"]
+	path = realm-core
+	url = git@github.com:realm/realm-core.git

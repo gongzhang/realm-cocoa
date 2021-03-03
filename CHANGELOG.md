@@ -9,6 +9,7 @@ x.y.z Release notes (yyyy-MM-dd)
 * Some of the SwiftUI property wrappers incorrectly required objects to conform
   to ObjectKeyIdentifiable rather than Identifiable.
 * Work around Xcode 13 beta 3+ shipping a broken swiftinterface file for Combine on 32-bit iOS.
+* Add support of arm64 in Carthage build ([#7154](https://github.com/realm/realm-cocoa/issues/7154)
 
 <!-- ### Breaking Changes - ONLY INCLUDE FOR NEW MAJOR version -->
 

@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////
 
 import Foundation
+import Realm
 import Realm.Private
 
 public protocol _RealmSchemaDiscoverable {

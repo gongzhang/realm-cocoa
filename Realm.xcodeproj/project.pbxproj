@@ -3350,6 +3350,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 5D660FBD1BE98BEF0021E04F /* RealmSwift.xcconfig */;
 			buildSettings = {
+				OTHER_SWIFT_FLAGS = "-Xfrontend -requirement-machine-inferred-signatures=off";
 			};
 			name = Debug;
 		};
@@ -3357,6 +3358,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 5D660FBD1BE98BEF0021E04F /* RealmSwift.xcconfig */;
 			buildSettings = {
+				OTHER_SWIFT_FLAGS = "-Xfrontend -requirement-machine-inferred-signatures=off";
 			};
 			name = Release;
 		};

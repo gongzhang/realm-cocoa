@@ -156,7 +156,12 @@ build_combined() {
     local xcframework_path="$out_path/$module_name.xcframework"
 
     # Build for each platform
-    xc -scheme "$scheme" -configuration "$config" -sdk "$os" build
+    if [ "$os" = "watchos" ]; then
+        # skip the new "arm64" arch for watchos
+        xc -scheme "$scheme" -configuration "$config" -sdk "watchos" -arch "arm64_32" -arch "armv7k" build
+    else
+        xc -scheme "$scheme" -configuration "$config" -sdk "$os" build
+    fi
     xc -scheme "$scheme" -configuration "$config" -sdk "$simulator" build ONLY_ACTIVE_ARCH=NO
 
     # Create the xcframework
@@ -425,7 +430,7 @@ case "$COMMAND" in
     "xcframework")
         # Build all of the requested frameworks
         shift
-        PLATFORMS="${*:-osx ios watchos tvos catalyst}"
+        PLATFORMS="${*:-osx ios watchos catalyst}"
         for platform in $PLATFORMS; do
             sh build.sh "$platform-swift"
         done

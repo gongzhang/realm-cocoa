@@ -135,8 +135,8 @@ public extension App {
     /**
      Login to a user for the Realm app.
      
-     @param credentials The credentials identifying the user.
-     @param completion A callback invoked after completion. Will return `Result.success(User)` or `Result.failure(Error)`.
+     - parameter credentials: The credentials identifying the user.
+     - parameter completion: A callback invoked after completion. Will return `Result.success(User)` or `Result.failure(Error)`.
      */
     func login(credentials: Credentials, _ completion: @escaping (Result<User, Error>) -> Void) {
         self.__login(withCredential: ObjectiveCSupport.convert(object: credentials)) { user, error in
@@ -563,8 +563,8 @@ public extension APIKeyAuth {
     }
 }
 
-#if swift(>=5.5.2) && canImport(_Concurrency)
-@available(macOS 12.0, tvOS 15.0, iOS 15.0, watchOS 8.0, *)
+#if swift(>=5.6) && canImport(_Concurrency)
+@available(macOS 10.15, tvOS 13.0, iOS 13.0, watchOS 6.0, *)
 extension EmailPasswordAuth {
     /// Resets the password of an email identity using the
     /// password reset function set up in the application.
@@ -587,7 +587,7 @@ extension EmailPasswordAuth {
     }
 }
 
-@available(macOS 12.0, tvOS 15.0, iOS 15.0, watchOS 8.0, *)
+@available(macOS 10.15, tvOS 13.0, iOS 13.0, watchOS 6.0, *)
 extension App {
     /// Login to a user for the Realm app.
     /// @param credentials The credentials identifying the user.

@@ -68,7 +68,7 @@ open class SwiftSyncTestCase: RLMSyncTestCase {
             XCTAssertNil(error)
             ex.fulfill()
         })
-        waitForExpectations(timeout: 4, handler: nil)
+        waitForExpectations(timeout: 40, handler: nil)
         return credentials
     }
 
@@ -256,7 +256,7 @@ open class SwiftSyncTestCase: RLMSyncTestCase {
     }
 }
 
-#if swift(>=5.5.2) && canImport(_Concurrency)
+#if swift(>=5.6) && canImport(_Concurrency)
 
 @available(macOS 12.0, *)
 extension SwiftSyncTestCase {
@@ -269,5 +269,5 @@ extension SwiftSyncTestCase {
     }
 }
 
-#endif // swift(>=5.5)
+#endif // swift(>=5.6)
 #endif // os(macOS)

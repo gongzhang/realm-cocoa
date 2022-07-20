@@ -37,14 +37,6 @@ void RLMVerifyHasPrimaryKey(Class cls);
 void RLMVerifyInWriteTransaction(RLMRealm *const realm);
 
 //
-// Accessor Creation
-//
-
-// create or get cached accessors for the given schema
-void RLMRealmCreateAccessors(RLMSchema *schema);
-
-
-//
 // Adding, Removing, Getting Objects
 //
 
@@ -83,8 +75,9 @@ void RLMInitializeSwiftAccessor(RLMObjectBase *object, bool promotingExisting);
 }
 
 namespace realm {
-    class Table;
     class Obj;
+    class Table;
+    struct ColKey;
     struct ObjLink;
 }
 class RLMClassInfo;

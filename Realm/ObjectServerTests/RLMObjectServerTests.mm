@@ -1139,25 +1139,29 @@ static NSString *randomEmail() {
     RLMCredentials *credentials = [self basicCredentialsWithName:NSStringFromSelector(_cmd)
                                                         register:self.isParent];
     RLMUser *user = [self logInUserForCredentials:credentials];
-    RLMRealm *realm = [self openRealmForPartitionValue:NSStringFromSelector(_cmd) user:user];
 
-    if (self.isParent) {
+    RLMRealmConfiguration *config;
+    @autoreleasepool {
+        RLMRealm *realm = [self openRealmForPartitionValue:NSStringFromSelector(_cmd) user:user];
+        config = realm.configuration;
         [self addPersonsToRealm:realm persons:@[[Person john]]];
         CHECK_COUNT(1, Person, realm);
         [self waitForUploadsForRealm:realm];
         // Log out the user out and back in
         [self logOutUser:user];
-        user = [self logInUserForCredentials:credentials];
         [self addPersonsToRealm:realm
                         persons:@[[Person john], [Person paul], [Person ringo]]];
+        user = [self logInUserForCredentials:credentials];
         [self waitForUploadsForRealm:realm];
         CHECK_COUNT(4, Person, realm);
-
-        // Verify that the post-login objects were actually synced
-        RLMRunChildAndWait();
-    } else {
-        CHECK_COUNT(4, Person, realm);
+        [realm.syncSession suspend];
+        [self.app.syncManager waitForSessionTermination];
     }
+
+    // Verify that the post-login objects were actually synced
+    XCTAssertTrue([RLMRealm deleteFilesForConfiguration:config error:nil]);
+    RLMRealm *realm = [self openRealmForPartitionValue:NSStringFromSelector(_cmd) user:user];
+    CHECK_COUNT(4, Person, realm);
 }
 
 /// A Realm that was opened before a user logged out should be able to resume downloading if the user logs back in.
@@ -1461,6 +1465,38 @@ static NSString *randomEmail() {
     XCTAssertFalse([NSFileManager.defaultManager fileExistsAtPath:pathValue]);
     [RLMSyncSession immediatelyHandleError:theError.rlmSync_errorActionToken syncManager:self.app.syncManager];
     XCTAssertTrue([NSFileManager.defaultManager fileExistsAtPath:pathValue]);
+}
+
+- (void)testSetClientResetMode {
+    RLMUser *user = [self userForTest:_cmd];
+    NSString *partitionValue = NSStringFromSelector(_cmd);
+    RLMRealmConfiguration *config = [user configurationWithPartitionValue:partitionValue clientResetMode:RLMClientResetModeDiscardLocal];
+    XCTAssertEqual(config.syncConfiguration.clientResetMode, RLMClientResetModeDiscardLocal);
+
+    // Default is manual
+    config = [user configurationWithPartitionValue:partitionValue];
+    XCTAssertEqual(config.syncConfiguration.clientResetMode, RLMClientResetModeManual);
+}
+
+- (void)testSetClientResetCallbacks {
+    RLMUser *user = [self userForTest:_cmd];
+    NSString *partitionValue = NSStringFromSelector(_cmd);
+    RLMRealmConfiguration *config = [user configurationWithPartitionValue:partitionValue clientResetMode:RLMClientResetModeDiscardLocal];
+    XCTAssertNil(config.syncConfiguration.beforeClientReset);
+    XCTAssertNil(config.syncConfiguration.afterClientReset);
+
+    RLMClientResetBeforeBlock beforeBlock = ^(RLMRealm *local __unused) {
+        XCTAssert(false, @"Should not execute callback");
+    };
+    RLMClientResetAfterBlock afterBlock = ^(RLMRealm *before __unused, RLMRealm *after __unused) {
+        XCTAssert(false, @"Should not execute callback");
+    };
+    RLMRealmConfiguration *config2 = [user configurationWithPartitionValue:partitionValue
+                                                           clientResetMode:RLMClientResetModeDiscardLocal
+                                                         notifyBeforeReset:beforeBlock
+                                                          notifyAfterReset:afterBlock];
+    XCTAssertNotNil(config2.syncConfiguration.beforeClientReset);
+    XCTAssertNotNil(config2.syncConfiguration.afterClientReset);
 }
 
 #pragma mark - Progress Notifications
@@ -2764,7 +2800,9 @@ static const NSInteger NUMBER_OF_BIG_OBJECTS = 2;
 static NSString *newPathForPartitionValue(RLMUser *user, id<RLMBSON> partitionValue) {
     std::stringstream s;
     s << RLMConvertRLMBSONToBson(partitionValue);
-    realm::SyncConfig config(user._syncUser, "");
+    // Intentionally not passing the correct partition value here as we (accidentally?)
+    // don't use the filename generated from the partition value
+    realm::SyncConfig config(user._syncUser, "null");
     return @(user._syncUser->sync_manager()->path_for_realm(config, s.str()).c_str());
 }
 
@@ -2791,20 +2829,18 @@ static NSString *newPathForPartitionValue(RLMUser *user, id<RLMBSON> partitionVa
                           newPathForPartitionValue(user, nil));
 }
 
-static NSString *oldPathForPartitionValue(RLMUser *user, id<RLMBSON> partitionValue) {
-    std::stringstream s;
-    s << RLMConvertRLMBSONToBson(partitionValue);
-    NSString *encodedPartitionValue = [@(s.str().c_str()) stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLPathAllowedCharacterSet]];
-    realm::SyncConfig config(user._syncUser,
-                             [[NSString alloc] initWithFormat:@"%@/%@", user.identifier, encodedPartitionValue].UTF8String);
-    return @(user._syncUser->sync_manager()->path_for_realm(config).c_str());
+static NSString *oldPathForPartitionValue(RLMUser *user, NSString *oldName) {
+    realm::SyncConfig config(user._syncUser, "null");
+    return [NSString stringWithFormat:@"%@/%s%@.realm",
+            [@(user._syncUser->sync_manager()->path_for_realm(config).c_str()) stringByDeletingLastPathComponent],
+            user._syncUser->identity().c_str(), oldName];
 }
 
 - (void)testLegacyFilePathsAreUsedIfFilesArePresent {
     RLMUser *user = self.anonymousUser;
 
-    auto testPartitionValue = [&](id<RLMBSON> partitionValue) {
-        NSURL *url = [NSURL fileURLWithPath:oldPathForPartitionValue(user, partitionValue)];
+    auto testPartitionValue = [&](id<RLMBSON> partitionValue, NSString *oldName) {
+        NSURL *url = [NSURL fileURLWithPath:oldPathForPartitionValue(user, oldName)];
         @autoreleasepool {
             auto configuration = [user configurationWithPartitionValue:partitionValue];
             configuration.fileURL = url;
@@ -2822,9 +2858,9 @@ static NSString *oldPathForPartitionValue(RLMUser *user, id<RLMBSON> partitionVa
         XCTAssertEqual([Person allObjectsInRealm:realm].count, 1U);
     };
 
-    testPartitionValue(@"abc");
-    testPartitionValue(@123);
-    testPartitionValue(nil);
+    testPartitionValue(@"abc", @"%2F%2522abc%2522");
+    testPartitionValue(@123, @"%2F%257B%2522%24numberInt%2522%253A%2522123%2522%257D");
+    testPartitionValue(nil, @"%2Fnull");
 }
 @end
 

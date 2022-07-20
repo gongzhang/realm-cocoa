@@ -35,6 +35,10 @@ private func safeWrite<Value>(_ value: Value, _ block: (Value) -> Void) where Va
     }
 }
 
+private func thawObjectIfFrozen<Value>(_ value: Value) -> Value where Value: ObjectBase & ThreadConfined {
+    return value.realm == nil ? value : value.thaw() ?? value
+}
+
 @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
 private func createBinding<T: ThreadConfined, V>(
     _ value: T,
@@ -346,6 +350,15 @@ private class ObservableStorage<ObservedType>: ObservableObject where ObservedTy
     }
     /**
      Initialize a RealmState struct for a given thread confined type.
+     - parameter wrappedValue The MutableSet reference to wrap and observe.
+     */
+    @available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *)
+    public init<Value>(wrappedValue: T) where T == MutableSet<Value> {
+        self._storage = StateObject(wrappedValue: ObservableStorage(wrappedValue))
+        defaultValue = T()
+    }
+    /**
+     Initialize a RealmState struct for a given thread confined type.
      - parameter wrappedValue The Map reference to wrap and observe.
      */
     @available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 7.0, *)
@@ -422,10 +435,11 @@ extension Projection: _ObservedResultsValue { }
             if let sortDescriptor = sortDescriptor {
                 value = value.sorted(byKeyPath: sortDescriptor.keyPath, ascending: sortDescriptor.ascending)
             }
-            if let filter = filter {
-                value = value.filter(filter)
-            } else if let `where` = `where` {
-                value = value.where(`where`)
+
+            let filters = [searchFilter, filter ?? `where`].compactMap { $0 }
+            if !filters.isEmpty {
+                let compoundFilter = NSCompoundPredicate(andPredicateWithSubpredicates: filters)
+                value = value.filter(compoundFilter)
             }
             setupHasRun = true
         }
@@ -441,7 +455,7 @@ extension Projection: _ObservedResultsValue { }
                 didSet()
             }
         }
-        var `where`: ((Query<ResultType>) -> Query<Bool>)? {
+        var `where`: NSPredicate? {
             didSet {
                 didSet()
             }
@@ -453,6 +467,11 @@ extension Projection: _ObservedResultsValue { }
         }
 
         var searchString: String = ""
+        var searchFilter: NSPredicate? {
+            didSet {
+                didSet()
+            }
+        }
     }
 
     @Environment(\.realmConfiguration) var configuration
@@ -460,11 +479,11 @@ extension Projection: _ObservedResultsValue { }
     /// :nodoc:
     fileprivate func searchText<T: ObjectBase>(_ text: String, on keyPath: KeyPath<T, String>) {
         if text.isEmpty {
-            if storage.filter != nil {
-                storage.filter = nil
+            if storage.searchFilter != nil {
+                storage.searchFilter = nil
             }
         } else if text != storage.searchString {
-            storage.filter = Query<T>()[dynamicMember: keyPath].contains(text).predicate
+            storage.searchFilter = Query<T>()[dynamicMember: keyPath].contains(text).predicate
         }
         storage.searchString = text
     }
@@ -472,10 +491,10 @@ extension Projection: _ObservedResultsValue { }
     /// to the `where` parameter.
     @State public var filter: NSPredicate? {
         willSet {
+            storage.where = nil
             storage.filter = newValue
         }
     }
-#if swift(>=5.5)
     /// Stores a type safe query used for filtering the Results. This is mutually exclusive
     /// to the `filter` parameter.
     @State public var `where`: ((Query<ResultType>) -> Query<Bool>)? {
@@ -483,10 +502,10 @@ extension Projection: _ObservedResultsValue { }
         // Xcode 12.5.1. So Swift Queries are supported on Xcode 13 and above
         // when used with SwiftUI.
         willSet {
-            storage.where = newValue
+            storage.filter = nil
+            storage.where = newValue?(Query()).predicate
         }
     }
-#endif
     /// :nodoc:
     @State public var sortDescriptor: SortDescriptor? {
         willSet {
@@ -552,7 +571,6 @@ extension Projection: _ObservedResultsValue { }
         self.filter = filter
         self.sortDescriptor = sortDescriptor
     }
-#if swift(>=5.5)
     /**
      Initialize a `ObservedResults` struct for a given `Object` or `EmbeddedObject` type.
      - parameter type: Observed type
@@ -576,7 +594,6 @@ extension Projection: _ObservedResultsValue { }
         self.where = `where`
         self.sortDescriptor = sortDescriptor
     }
-#endif
     /// :nodoc:
     public init(_ type: ResultType.Type,
                 keyPaths: [String]? = nil,
@@ -590,7 +607,7 @@ extension Projection: _ObservedResultsValue { }
     public mutating func update() {
         // When the view updates, it will inject the @Environment
         // into the propertyWrapper
-        if storage.configuration == nil || storage.configuration != configuration {
+        if storage.configuration == nil {
             storage.configuration = configuration
         }
     }
@@ -754,6 +771,18 @@ public extension BoundCollection where Value: RealmCollection {
         }
     }
     /// :nodoc:
+    func remove<V>(_ element: V) where Value == MutableSet<V> {
+        safeWrite(self.wrappedValue) { mutableSet in
+            mutableSet.remove(element)
+        }
+    }
+    /// :nodoc:
+    func remove<V>(_ object: V) where Value == MutableSet<V>, V: ObjectBase & ThreadConfined {
+        safeWrite(self.wrappedValue) { mutableSet in
+            mutableSet.remove(thawObjectIfFrozen(object))
+        }
+    }
+    /// :nodoc:
     func move<V>(fromOffsets offsets: IndexSet, toOffset destination: Int) where Value == List<V> {
         safeWrite(self.wrappedValue) { list in
             list.move(fromOffsets: offsets, toOffset: destination)
@@ -766,13 +795,29 @@ public extension BoundCollection where Value: RealmCollection {
         }
     }
     /// :nodoc:
+    func insert<V>(_ value: Value.Element) where Value == MutableSet<V>, Value.Element: ObjectBase & ThreadConfined {
+        // if the value is unmanaged but the set is managed, we are adding this value to the realm
+        if value.realm == nil && self.wrappedValue.realm != nil {
+            SwiftUIKVO.observedObjects[value]?.cancel()
+        }
+        safeWrite(self.wrappedValue) { mutableSet in
+            mutableSet.insert(thawObjectIfFrozen(value))
+        }
+    }
+    /// :nodoc:
+    func insert<V>(_ value: Value.Element) where Value == MutableSet<V> {
+        safeWrite(self.wrappedValue) { mutableSet in
+            mutableSet.insert(value)
+        }
+    }
+    /// :nodoc:
     func append<V>(_ value: Value.Element) where Value == List<V>, Value.Element: ObjectBase & ThreadConfined {
         // if the value is unmanaged but the list is managed, we are adding this value to the realm
         if value.realm == nil && self.wrappedValue.realm != nil {
             SwiftUIKVO.observedObjects[value]?.cancel()
         }
         safeWrite(self.wrappedValue) { list in
-            list.append(value)
+            list.append(thawObjectIfFrozen(value))
         }
     }
     /// :nodoc:
@@ -781,7 +826,7 @@ public extension BoundCollection where Value: RealmCollection {
             SwiftUIKVO.observedObjects[value]?.cancel()
         }
         safeWrite(self.wrappedValue) { results in
-            results.realm?.add(value)
+            results.realm?.add(thawObjectIfFrozen(value))
         }
     }
     /// :nodoc:
@@ -790,7 +835,7 @@ public extension BoundCollection where Value: RealmCollection {
             SwiftUIKVO.observedObjects[value.rootObject]?.cancel()
         }
         safeWrite(self.wrappedValue) { results in
-            results.realm?.add(value.rootObject)
+            results.realm?.add(thawObjectIfFrozen(value.rootObject))
         }
     }
 }
@@ -839,7 +884,7 @@ public extension BoundMap where Value: RealmKeyedCollection {
             SwiftUIKVO.observedObjects[value]?.cancel()
         }
         safeWrite(self.wrappedValue) { map in
-            map[key] = value
+            map[key] = thawObjectIfFrozen(value)
         }
     }
 
@@ -867,7 +912,7 @@ extension Binding where Value: Object {
     /// :nodoc:
     public func delete() {
         safeWrite(wrappedValue) { object in
-            object.realm?.delete(self.wrappedValue)
+            object.realm?.delete(thawObjectIfFrozen(self.wrappedValue))
         }
     }
 }
@@ -877,7 +922,7 @@ extension Binding where Value: ProjectionObservable, Value.Root: ThreadConfined 
     /// :nodoc:
     public func delete() {
         safeWrite(wrappedValue.rootObject) { object in
-            object.realm?.delete(object)
+            object.realm?.delete(thawObjectIfFrozen(object))
         }
     }
 }

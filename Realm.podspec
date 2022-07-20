@@ -13,7 +13,7 @@ Pod::Spec.new do |s|
   s.homepage                = "https://realm.io"
   s.source                  = { :git => 'https://github.com/realm/realm-swift.git', :tag => "v#{s.version}" }
   s.author                  = { 'Realm' => 'realm-help@mongodb.com' }
-  s.library                 = 'c++', 'z'
+  s.library                 = 'c++', 'z', 'compression'
   s.requires_arc            = true
   s.social_media_url        = 'https://twitter.com/realm'
   s.documentation_url       = "https://docs.mongodb.com/realm/sdk/swift"
@@ -54,7 +54,6 @@ Pod::Spec.new do |s|
                               'include/RLMPushClient.h',
                               'include/RLMProviderClient.h',
                               'include/RLMRealm+Sync.h',
-                              'include/RLMRealmConfiguration+Sync.h',
                               'include/RLMSyncConfiguration.h',
                               'include/RLMCredentials.h',
                               'include/RLMSyncManager.h',
@@ -83,6 +82,7 @@ Pod::Spec.new do |s|
                               'include/RLMBSON_Private.h',
                               'include/RLMCollection_Private.h',
                               'include/RLMDictionary_Private.h',
+                              'include/RLMEvent.h',
                               'include/RLMObjectBase_Private.h',
                               'include/RLMObjectSchema_Private.h',
                               'include/RLMObjectStore.h',

@@ -1,10 +1,10 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.5
 
 import PackageDescription
 import Foundation
 
-let coreVersionStr = "11.12.0"
-let cocoaVersionStr = "10.24.2"
+let coreVersionStr = "11.17.0"
+let cocoaVersionStr = "10.26.0"
 
 let coreVersionPieces = coreVersionStr.split(separator: ".")
 let coreVersionExtra = coreVersionPieces[2].split(separator: "-")
@@ -36,22 +36,6 @@ let testCxxSettings: [CXXSetting] = cxxSettings + [
     .headerSearchPath(".."),
 ]
 
-// Xcode 12.5's xctest crashes when reading obj-c metadata if the Swift tests
-// aren't built targeting macOS 11. We still want all of the non-test code to
-// target the normal lower version, though.
-func hostMachineArch() -> String {
-    var systemInfo = utsname()
-    uname(&systemInfo)
-    let machineBytes = Mirror(reflecting: systemInfo.machine).children.map { UInt8($0.value as! Int8) }.prefix { $0 != 0 }
-    return String(bytes: machineBytes, encoding: .utf8)!
-}
-let testSwiftSettings: [SwiftSetting]?
-#if swift(>=5.4) && !swift(>=5.5)
-testSwiftSettings = [.unsafeFlags(["-target", "\(hostMachineArch())-apple-macosx11.0"])]
-#else
-testSwiftSettings = nil
-#endif
-
 // SPM requires all targets to explicitly include or exclude every file, which
 // gets very awkward when we have four targets building from a single directory
 let objectServerTestSources = [
@@ -71,7 +55,8 @@ let objectServerTestSources = [
     "RLMUser+ObjectServerTests.mm",
     "RLMWatchTestUtility.h",
     "RLMWatchTestUtility.m",
-    "RealmServer.swift",
+    "EventTests.swift" ,
+    "RealmServer.swift" ,
     "SwiftCollectionSyncTests.swift",
     "SwiftFlexibleSyncServerTests.swift",
     "SwiftMongoClientTests.swift",
@@ -83,6 +68,7 @@ let objectServerTestSources = [
     "TimeoutProxyServer.swift",
     "WatchTestUtility.swift",
     "certificates",
+    "config_overrides.json",
     "include",
     "setup_baas.rb",
 ]
@@ -94,8 +80,7 @@ func objectServerTestSupportTarget(name: String, dependencies: [Target.Dependenc
         path: "Realm/ObjectServerTests",
         exclude: objectServerTestSources.filter { !sources.contains($0) },
         sources: sources,
-        cxxSettings: testCxxSettings,
-        swiftSettings: testSwiftSettings
+        cxxSettings: testCxxSettings
     )
 }
 
@@ -106,8 +91,7 @@ func objectServerTestTarget(name: String, sources: [String]) -> Target {
         path: "Realm/ObjectServerTests",
         exclude: objectServerTestSources.filter { !sources.contains($0) },
         sources: sources,
-        cxxSettings: testCxxSettings,
-        swiftSettings: testSwiftSettings
+        cxxSettings: testCxxSettings
     )
 }
 
@@ -167,6 +151,7 @@ let package = Package(
                 "scripts",
             ],
             sources: [
+                "Realm/RLMEvent.mm",
                 "Realm/RLMAccessor.mm",
                 "Realm/RLMAnalytics.mm",
                 "Realm/RLMArray.mm",
@@ -219,7 +204,6 @@ let package = Package(
                 "Realm/RLMProviderClient.mm",
                 "Realm/RLMPushClient.mm",
                 "Realm/RLMRealm+Sync.mm",
-                "Realm/RLMRealmConfiguration+Sync.mm",
                 "Realm/RLMSyncConfiguration.mm",
                 "Realm/RLMSyncManager.mm",
                 "Realm/RLMSyncSession.mm",
@@ -276,8 +260,7 @@ let package = Package(
             name: "RealmObjcSwiftTests",
             dependencies: ["Realm", "RealmTestSupport"],
             path: "Realm/Tests/Swift",
-            exclude: ["RealmObjcSwiftTests-Info.plist"],
-            swiftSettings: testSwiftSettings
+            exclude: ["RealmObjcSwiftTests-Info.plist"]
         ),
         .testTarget(
             name: "RealmSwiftTests",
@@ -286,14 +269,13 @@ let package = Package(
             exclude: [
                 "RealmSwiftTests-Info.plist",
                 "QueryTests.swift.gyb"
-            ],
-            swiftSettings: testSwiftSettings
+            ]
         ),
 
         // Object server tests have support code written in both obj-c and
         // Swift which is used by both the obj-c and swift test code. SPM
         // doesn't support mixed targets, so this ends up requiring four
-        // different targest.
+        // different targets.
         objectServerTestSupportTarget(
             name: "RealmSyncTestSupport",
             dependencies: ["Realm", "RealmSwift", "RealmTestSupport"],
@@ -315,6 +297,7 @@ let package = Package(
         objectServerTestTarget(
             name: "SwiftObjectServerTests",
             sources: [
+                "EventTests.swift",
                 "SwiftObjectServerTests.swift",
                 "SwiftCollectionSyncTests.swift",
                 "SwiftObjectServerPartitionTests.swift",
@@ -335,5 +318,5 @@ let package = Package(
             ]
         )
     ],
-    cxxLanguageStandard: .cxx1z
+    cxxLanguageStandard: .cxx20
 )

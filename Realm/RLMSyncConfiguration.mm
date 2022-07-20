@@ -20,7 +20,11 @@
 
 #import "RLMApp_Private.hpp"
 #import "RLMBSON_Private.hpp"
-#import "RLMRealmConfiguration+Sync.h"
+#import "RLMRealm_Private.hpp"
+#import "RLMRealmConfiguration_Private.h"
+#import "RLMRealmConfiguration_Private.hpp"
+#import "RLMRealmUtil.hpp"
+#import "RLMSchema_Private.hpp"
 #import "RLMSyncManager_Private.hpp"
 #import "RLMSyncSession_Private.hpp"
 #import "RLMSyncUtil_Private.hpp"
@@ -54,7 +58,49 @@ RLMSyncSystemErrorKind errorKindForSyncError(SyncError error) {
         return RLMSyncSystemErrorKindUnknown;
     }
 }
-}
+
+struct CallbackSchema {
+    bool dynamic;
+    std::string path;
+    RLMSchema *customSchema;
+
+    RLMSchema *getSchema(Realm& realm) {
+        if (dynamic) {
+            return [RLMSchema dynamicSchemaFromObjectStoreSchema:realm.schema()];
+        }
+        if (auto cached = RLMGetAnyCachedRealmForPath(path)) {
+            return cached.schema;
+        }
+        return customSchema ?: RLMSchema.sharedSchema;
+    }
+};
+
+struct BeforeClientResetWrapper : CallbackSchema {
+    RLMClientResetBeforeBlock block;
+    void operator()(std::shared_ptr<Realm> local) {
+        @autoreleasepool {
+            block([RLMRealm realmWithSharedRealm:local schema:getSchema(*local) dynamic:false]);
+        }
+    }
+};
+
+struct AfterClientResetWrapper : CallbackSchema {
+    RLMClientResetAfterBlock block;
+    void operator()(std::shared_ptr<Realm> local, std::shared_ptr<Realm> remote, bool) {
+        @autoreleasepool {
+            RLMSchema *schema = getSchema(*local);
+            RLMRealm *localRealm = [RLMRealm realmWithSharedRealm:local
+                                                           schema:schema
+                                                          dynamic:false];
+
+            RLMRealm *remoteRealm = [RLMRealm realmWithSharedRealm:remote
+                                                            schema:schema
+                                                           dynamic:false];
+            block(localRealm, remoteRealm);
+        }
+    }
+};
+} // anonymous namespace
 
 @interface RLMSyncConfiguration () {
     std::unique_ptr<realm::SyncConfig> _config;
@@ -100,6 +146,63 @@ RLMSyncSystemErrorKind errorKindForSyncError(SyncError error) {
     _config->stop_policy = translateStopPolicy(stopPolicy);
 }
 
+- (RLMClientResetMode)clientResetMode {
+    return RLMClientResetMode(_config->client_resync_mode);
+}
+
+- (RLMClientResetBeforeBlock)beforeClientReset {
+    if (_config->notify_before_client_reset) {
+        auto wrapper = _config->notify_before_client_reset.target<BeforeClientResetWrapper>();
+        return wrapper->block;
+    } else {
+        return nil;
+    }
+}
+
+- (void)setBeforeClientReset:(RLMClientResetBeforeBlock)beforeClientReset {
+    if (!beforeClientReset) {
+        _config->notify_before_client_reset = nullptr;
+    } else if (self.clientResetMode == RLMClientResetModeManual) {
+        @throw RLMException(@"Client reset notifications not supported in Manual mode. Use SyncManager.ErrorHandler");
+    } else {
+        _config->notify_before_client_reset = BeforeClientResetWrapper{.block = beforeClientReset};
+    }
+}
+
+- (RLMClientResetAfterBlock)afterClientReset {
+    if (_config->notify_after_client_reset) {
+        auto wrapper = _config->notify_after_client_reset.target<AfterClientResetWrapper>();
+        return wrapper->block;
+    } else {
+        return nil;
+    }
+}
+
+- (void)setAfterClientReset:(RLMClientResetAfterBlock)afterClientReset {
+    if (!afterClientReset) {
+        _config->notify_after_client_reset = nullptr;
+    } else if (self.clientResetMode == RLMClientResetModeManual) {
+        @throw RLMException(@"Client reset notifications not supported in Manual mode. Use SyncManager.ErrorHandler");
+    } else {
+        _config->notify_after_client_reset = AfterClientResetWrapper{.block = afterClientReset};
+    }
+}
+
+void RLMSetConfigInfoForClientResetCallbacks(realm::SyncConfig& syncConfig, RLMRealmConfiguration *config) {
+    if (syncConfig.notify_before_client_reset) {
+        auto before = syncConfig.notify_before_client_reset.target<BeforeClientResetWrapper>();
+        before->dynamic = config.dynamic;
+        before->path = config.path;
+        before->customSchema = config.customSchema;
+    }
+    if (syncConfig.notify_after_client_reset) {
+        auto after = syncConfig.notify_after_client_reset.target<AfterClientResetWrapper>();
+        after->dynamic = config.dynamic;
+        after->path = config.path;
+        after->customSchema = config.customSchema;
+    }
+}
+
 - (id<RLMBSON>)partitionValue {
     if (!_config->partition_value.empty()) {
         return RLMConvertBsonToRLMBSON(realm::bson::parse(_config->partition_value.c_str()));
@@ -125,17 +228,26 @@ RLMSyncSystemErrorKind errorKindForSyncError(SyncError error) {
                partitionValue:partitionValue
                 customFileURL:nil
                    stopPolicy:RLMSyncStopPolicyAfterChangesUploaded
-           enableFlexibleSync:false];
+           enableFlexibleSync:false
+              clientResetMode:RLMClientResetModeManual
+            notifyBeforeReset:nil 
+             notifyAfterReset:nil];
 }
 
 - (instancetype)initWithUser:(RLMUser *)user
               partitionValue:(nullable id<RLMBSON>)partitionValue
-                  stopPolicy:(RLMSyncStopPolicy)stopPolicy {
+                  stopPolicy:(RLMSyncStopPolicy)stopPolicy
+             clientResetMode:(RLMClientResetMode)clientResetMode
+           notifyBeforeReset:(nullable RLMClientResetBeforeBlock)beforeResetBlock
+            notifyAfterReset:(nullable RLMClientResetAfterBlock)afterResetBlock {
     auto config = [self initWithUser:user
                       partitionValue:partitionValue
                        customFileURL:nil
                           stopPolicy:stopPolicy
-                  enableFlexibleSync:false];
+                  enableFlexibleSync:false
+                     clientResetMode:clientResetMode
+                   notifyBeforeReset:beforeResetBlock
+                    notifyAfterReset:afterResetBlock];
     return config;
 }
 
@@ -146,15 +258,93 @@ RLMSyncSystemErrorKind errorKindForSyncError(SyncError error) {
                       partitionValue:nil
                        customFileURL:nil
                           stopPolicy:stopPolicy
-                  enableFlexibleSync:enableFlexibleSync];
+                  enableFlexibleSync:enableFlexibleSync
+                     clientResetMode:RLMClientResetModeManual
+                   notifyBeforeReset:nil
+                    notifyAfterReset:nil];
     return config;
+}
+
+
+
+- (instancetype)initWithUser:(RLMUser *)user
+              partitionValue:(nullable id<RLMBSON>)partitionValue
+             clientResetMode:(RLMClientResetMode)clientResetMode {
+    auto config = [self initWithUser:user
+                      partitionValue:partitionValue
+                       customFileURL:nil
+                          stopPolicy:RLMSyncStopPolicyAfterChangesUploaded
+                  enableFlexibleSync:false
+                     clientResetMode:clientResetMode
+                   notifyBeforeReset:nil
+                    notifyAfterReset:nil];
+    return config;
+}
+
+- (instancetype)initWithUser:(RLMUser *)user
+          enableFlexibleSync:(BOOL)enableFlexibleSync
+             clientResetMode:(RLMClientResetMode)clientResetMode {
+    auto config = [self initWithUser:user
+                      partitionValue:nil
+                       customFileURL:nil
+                          stopPolicy:RLMSyncStopPolicyAfterChangesUploaded
+                  enableFlexibleSync:enableFlexibleSync
+                     clientResetMode:clientResetMode
+                   notifyBeforeReset:nil
+                    notifyAfterReset:nil];
+    return config;
+}
+
+NSError *RLMTranslateSyncError(SyncError error) {
+    NSString *recoveryPath;
+    RLMSyncErrorActionToken *token;
+    for (auto& pair : error.user_info) {
+        if (pair.first == realm::SyncError::c_original_file_path_key) {
+            token = [[RLMSyncErrorActionToken alloc] initWithOriginalPath:pair.second];
+        }
+        else if (pair.first == realm::SyncError::c_recovery_file_path_key) {
+            recoveryPath = @(pair.second.c_str());
+        }
+    }
+
+    NSDictionary *custom;
+    // Note that certain types of errors are 'interactive'; users have several options
+    // as to how to proceed after the error is reported.
+    auto errorClass = errorKindForSyncError(error);
+    switch (errorClass) {
+        case RLMSyncSystemErrorKindClientReset: {
+            custom = @{kRLMSyncPathOfRealmBackupCopyKey: recoveryPath, kRLMSyncErrorActionTokenKey: token};
+            break;
+        }
+        case RLMSyncSystemErrorKindPermissionDenied: {
+            if (token) {
+                custom = @{kRLMSyncErrorActionTokenKey: token};
+            }
+            break;
+        }
+        case RLMSyncSystemErrorKindUser:
+        case RLMSyncSystemErrorKindSession:
+            break;
+        case RLMSyncSystemErrorKindConnection:
+        case RLMSyncSystemErrorKindClient:
+        case RLMSyncSystemErrorKindUnknown:
+            if (!error.is_fatal) {
+                return nil;
+            }
+            break;
+    }
+
+    return make_sync_error(errorClass, @(error.message.c_str()), error.error_code.value(), custom);
 }
 
 - (instancetype)initWithUser:(RLMUser *)user
               partitionValue:(nullable id<RLMBSON>)partitionValue
                customFileURL:(nullable NSURL *)customFileURL
                   stopPolicy:(RLMSyncStopPolicy)stopPolicy
-          enableFlexibleSync:(BOOL)enableFlexibleSync {
+          enableFlexibleSync:(BOOL)enableFlexibleSync
+             clientResetMode:(RLMClientResetMode)clientResetMode
+           notifyBeforeReset:(RLMClientResetBeforeBlock)beforeResetBlock
+            notifyAfterReset:(RLMClientResetAfterBlock)afterResetBlock {
     if (self = [super init]) {
         if (enableFlexibleSync) {
             _config = std::make_unique<SyncConfig>([user _syncUser], SyncConfig::FLXSyncEnabled{});
@@ -168,58 +358,26 @@ RLMSyncSystemErrorKind errorKindForSyncError(SyncError error) {
         RLMSyncManager *manager = [user.app syncManager];
         __weak RLMSyncManager *weakManager = manager;
         _config->error_handler = [weakManager](std::shared_ptr<SyncSession> errored_session, SyncError error) {
-            NSString *recoveryPath;
-            RLMSyncErrorActionToken *token;
-            for (auto& pair : error.user_info) {
-                if (pair.first == realm::SyncError::c_original_file_path_key) {
-                    token = [[RLMSyncErrorActionToken alloc] initWithOriginalPath:pair.second];
-                }
-                else if (pair.first == realm::SyncError::c_recovery_file_path_key) {
-                    recoveryPath = @(pair.second.c_str());
-                }
-            }
-
-            BOOL shouldMakeError = YES;
-            NSDictionary *custom = nil;
-            // Note that certain types of errors are 'interactive'; users have several options
-            // as to how to proceed after the error is reported.
-            auto errorClass = errorKindForSyncError(error);
-            switch (errorClass) {
-                case RLMSyncSystemErrorKindClientReset: {
-                    custom = @{kRLMSyncPathOfRealmBackupCopyKey: recoveryPath, kRLMSyncErrorActionTokenKey: token};
-                    break;
-                }
-                case RLMSyncSystemErrorKindPermissionDenied: {
-                    if (token) {
-                        custom = @{kRLMSyncErrorActionTokenKey: token};
-                    }
-                    break;
-                }
-                case RLMSyncSystemErrorKindUser:
-                case RLMSyncSystemErrorKindSession:
-                    break;
-                case RLMSyncSystemErrorKindConnection:
-                case RLMSyncSystemErrorKindClient:
-                case RLMSyncSystemErrorKindUnknown:
-                    // Report the error. There's nothing the user can do about it, though.
-                    shouldMakeError = error.is_fatal;
-                    break;
-            }
-
             RLMSyncErrorReportingBlock errorHandler;
             @autoreleasepool {
                 errorHandler = weakManager.errorHandler;
             }
-            if (!shouldMakeError || !errorHandler) {
+            if (!errorHandler) {
                 return;
             }
-            NSError *nsError = make_sync_error(errorClass, @(error.message.c_str()), error.error_code.value(), custom);
+            NSError *nsError = RLMTranslateSyncError(std::move(error));
+            if (!nsError) {
+                return;
+            }
             RLMSyncSession *session = [[RLMSyncSession alloc] initWithSyncSession:errored_session];
             dispatch_async(dispatch_get_main_queue(), ^{
                 errorHandler(nsError, session);
             });
         };
-        _config->client_resync_mode = realm::ClientResyncMode::Manual;
+        // Default to manual mode
+        _config->client_resync_mode = realm::ClientResyncMode(clientResetMode);
+        self.beforeClientReset = beforeResetBlock;
+        self.afterClientReset = afterResetBlock;
 
         if (NSString *authorizationHeaderName = manager.authorizationHeaderName) {
             _config->authorization_header_name.emplace(authorizationHeaderName.UTF8String);

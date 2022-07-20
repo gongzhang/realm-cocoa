@@ -1,3 +1,265 @@
+10.26.0 Release notes (2022-05-19)
+=============================================================
+
+Xcode 13.1 is now the minimum supported version of Xcode, as Apple no longer
+allows submitting to the app store with Xcode 12.
+
+### Enhancements
+
+* Add Xcode 13.4 binaries to the release package.
+* Add Swift API for asynchronous transactions
+```swift
+    try? realm.writeAsync {
+        realm.create(SwiftStringObject.self, value: ["string"])
+    } onComplete: { error in
+        // optional handling on write complete
+    }
+
+    try? realm.beginAsyncWrite {
+        realm.create(SwiftStringObject.self, value: ["string"])
+        realm.commitAsyncWrite()
+    }
+
+    let asyncTransactionId = try? realm.beginAsyncWrite {
+        // ...
+    }
+    try! realm.cancelAsyncWrite(asyncTransactionId)
+```
+* Add Obj-C API for asynchronous transactions
+```
+   [realm asyncTransactionWithBlock:^{
+        [StringObject createInRealm:realm withValue:@[@"string"]];
+    } onComplete:^(NSError *error) {
+        // optional handling
+    }];
+
+    [realm beginAsyncWriteTransaction:^{
+        [StringObject createInRealm:realm withValue:@[@"string"]];
+        [realm commitAsyncWriteTransaction];
+    }];
+
+    RLMAsyncTransactionId asyncTransactionId = [realm beginAsyncWriteTransaction:^{
+        // ...
+    }];
+    [realm cancelAsyncTransaction:asyncTransactionId];
+```
+* Improve performance of opening a Realm with `objectClasses`/`objectTypes` set
+  in the configuration.
+* Implement the Realm event recording API for reporting reads and writes on a
+  Realm file to Atlas.
+
+### Fixed
+
+* Lower minimum OS version for `async` login and FunctionCallables to match the
+  rest of the `async` functions. ([#7791]https://github.com/realm/realm-swift/issues/7791)
+* Consuming a RealmSwift XCFramework with library evolution enabled would give the error
+  `'Failed to build module 'RealmSwift'; this SDK is not supported by the compiler'`
+  when the XCFramework was built with an older XCode version and is
+  then consumed with a later version. ([#7313](https://github.com/realm/realm-swift/issues/7313), since v3.18.0)
+* A data race would occur when opening a synchronized Realm with the client
+  reset mode set to `discardLocal` on one thread at the same time as a client
+  reset was being processed on another thread. This probably did not cause any
+  functional problems in practice and the broken timing window was very tight (since 10.25.0).
+* If an async open of a Realm triggered a client reset, the callbacks for
+  `discardLocal` could theoretically fail to be called due to a race condition.
+  The timing for this was probably not possible to hit in practice (since 10.25.0).
+* Calling `[RLMRealm freeze]`/`Realm.freeze` on a Realm which had been created from `writeCopy`
+  would not produce a frozen Realm. ([#7697](https://github.com/realm/realm-swift/issues/7697), since v5.0.0)
+* Using the dynamic subscript API on unmanaged objects before first opening a
+  Realm or if `objectTypes` was set when opening a Realm would throw an
+  exception ([#7786](https://github.com/realm/realm-swift/issues/7786)).
+* The sync client may have sent a corrupted upload cursor leading to a fatal
+  error from the server due to an uninitialized variable.
+  ([#5460](https://github.com/realm/realm-core/pull/5460), since v10.25.1)
+* Flexible sync would not correctly resume syncing if a bootstrap was interrupted
+  ([#5466](https://github.com/realm/realm-core/pull/5466), since v10.21.1).
+
+### Compatibility
+
+* Realm Studio: 11.0.0 or later.
+* APIs are backwards compatible with all previous releases in the 10.x.y series.
+* Carthage release for Swift is built with Xcode 13.4.
+* CocoaPods: 1.10 or later.
+* Xcode: 13.1-13.4.
+
+### Internal
+
+* Upgraded realm-core from v11.15.0 to v11.17.0
+
+10.25.2 Release notes (2022-04-27)
+=============================================================
+
+### Enhancements
+
+* Replace Xcode 13.3 binaries with 13.3.1 binaries.
+
+### Fixed
+
+* `List<AnyRealmValue>` would contain an invalidated object instead of null when
+  the object linked to was deleted by a difference sync client
+  ([Core #5215](https://github.com/realm/realm-core/pull/5215), since v10.8.0).
+* Adding an object to a Set, deleting the parent object of the Set, and then
+  deleting the object which was added to the Set would crash
+  ([Core #5387](https://github.com/realm/realm-core/issues/5387), since v10.8.0).
+* Synchronized Realm files which were first created using v10.0.0-beta.3 would
+  be redownloaded instead of using the existing file, possibly resulting in the
+  loss of any unsynchronized data in those files (since v10.20.0).
+
+### Compatibility
+
+* Realm Studio: 11.0.0 or later.
+* APIs are backwards compatible with all previous releases in the 10.x.y series.
+* Carthage release for Swift is built with Xcode 13.3.1.
+* CocoaPods: 1.10 or later.
+* Xcode: 12.4-13.3.1.
+
+### Internal
+
+* Upgraded realm-core from v11.14.0 to v11.15.0
+
+10.25.1 Release notes (2022-04-11)
+=============================================================
+
+### Fixed
+
+* Fixed various memory corruption bugs when encryption is used caused by not
+  locking a mutex when needed.
+  ([#7640](https://github.com/realm/realm-swift/issues/7640), [#7659](https://github.com/realm/realm-swift/issues/7659), since v10.21.1)
+* Changeset upload batching did not calculate the accumulated size correctly,
+  resulting in “error reading body failed to read: read limited at 16777217
+  bytes” errors from the server when writing large amounts of data
+  ([Core #5373](https://github.com/realm/realm-core/pull/5373), since 11.13.0).
+
+### Compatibility
+
+* Realm Studio: 11.0.0 or later.
+* APIs are backwards compatible with all previous releases in the 10.x.y series.
+* Carthage release for Swift is built with Xcode 13.3.
+* CocoaPods: 1.10 or later.
+* Xcode: 12.4-13.3.
+
+### Internal
+
+* Upgraded realm-core from v11.13.0 to v11.14.0.
+
+10.25.0 Release notes (2022-03-29)
+=============================================================
+
+Synchronized Realm files written by this version cannot be opened by older
+versions of Realm. Existing files will be automatically upgraded when opened.
+
+Non-synchronized Realm files remain backwards-compatible.
+
+### Enhancements
+
+* Add ability to use Swift Query syntax in `@ObservedResults`, which allows you
+  to filter results using the `where` parameter.
+* Add ability to use `MutableSet` with `StateRealmObject` in SwiftUI.
+* Async/Await extensions are now compatible with iOS 13 and above when building
+  with Xcode 13.3.
+* Sync changesets waiting to be uploaded to the server are now compressed,
+  reducing the disk space needed when large write transactions are performed
+  while offline or limited in bandwidth.([Core #5260](https://github.com/realm/realm-core/pull/5260)).
+* Added new `SyncConfiguration.clientResetMode` and `RLMSyncConfiguration.clientResetMode` properties.
+  - The values of these properties will dictate client behavior in the event of a [client reset](https://docs.mongodb.com/realm/sync/error-handling/client-resets/).
+  - See below for information on `ClientResetMode` values.
+  - `clientResetMode` defaults to `.manual` if not set otherwise.
+* Added new `ClientResetMode` and `RLMClientResetMode` enums.
+  - These enums represent possible client reset behavior for `SyncConfiguration.clientResetMode` and `RLMSyncConfiguration.clientResetMode`, respectively.
+  - `.manual` and `RLMClientResetModeManual`
+    - The local copy of the Realm is copied into a recovery
+      directory for safekeeping, and then deleted from the original location. The next time
+      the Realm for that partition value is opened, the Realm will automatically be re-downloaded from
+      MongoDB Realm, and can be used as normal.
+    - Data written to the Realm after the local copy of the Realm diverged from the backup
+      remote copy will be present in the local recovery copy of the Realm file. The
+      re-downloaded Realm will initially contain only the data present at the time the Realm
+      was backed up on the server.
+    -  `rlmSync_clientResetBackedUpRealmPath` and `SyncError.clientResetInfo()` are used for accessing the recovery directory.
+  - `.discardLocal` and `RLMClientResetDiscardLocal`
+    - All unsynchronized local changes are automatically discarded and the local state is
+      automatically reverted to the most recent state from the server. Unsynchronized changes
+      can then be recovered in a post-client-reset callback block (See changelog below for more details).
+    - If RLMClientResetModeDiscardLocal is enabled but the client reset operation is unable to complete
+      then the client reset process reverts to manual mode.
+    - The realm's underlying object accessors remain bound so the UI may be updated in a non-disruptive way.
+* Added support for client reset notification blocks for `.discardLocal` and `RLMClientResetDiscardLocal`
+  - **RealmSwift implementation**: `discardLocal(((Realm) -> Void)? = nil, ((Realm, Realm) -> Void)? = nil)` 
+    - RealmSwift client reset blocks are set when initializing the user configuration
+    ```swift
+    var configuration = user.configuration(partitionValue: "myPartition", clientResetMode: .discardLocal(beforeClientResetBlock, afterClientResetBlock))
+    ```
+    - The before client reset block -- `((Realm) -> Void)? = nil` -- is executed prior to a client reset. Possible usage includes:
+    ```swift
+    let beforeClientResetBlock: (Realm) -> Void = { beforeRealm in
+      var recoveryConfig = Realm.Configuration()
+        recoveryConfig.fileURL = myRecoveryPath
+        do {
+          beforeRealm.writeCopy(configuration: recoveryConfig)
+            /* The copied realm could be used later for recovery, debugging, reporting, etc. */
+        } catch {
+            /* handle error */
+        }
+    }
+    ```
+    - The after client reset block -- `((Realm, Realm) -> Void)? = nil)` -- is executed after a client reset. Possible usage includes:
+    ```Swift
+    let afterClientResetBlock: (Realm, Realm) -> Void = { before, after in
+    /* This block could be used to add custom recovery logic, back-up a realm file, send reporting, etc. */
+    for object in before.objects(myClass.self) {
+        let res = after.objects(myClass.self)
+        if (res.filter("primaryKey == %@", object.primaryKey).first != nil) {
+             /* ...custom recovery logic... */
+        } else {
+             /* ...custom recovery logic... */
+        }
+    }
+    ```
+  - **Realm Obj-c implementation**: Both before and after client reset callbacks exist as properties on `RLMSyncConfiguration` and are set at initialization.
+    ```objective-c
+      RLMRealmConfiguration *config = [user configurationWithPartitionValue:partitionValue
+                                                            clientResetMode:RLMClientResetModeDiscardLocal
+                                                          notifyBeforeReset:beforeBlock
+                                                           notifyAfterReset:afterBlock];
+    ```
+    where `beforeBlock` is of type `RLMClientResetBeforeBlock`. And `afterBlock` is of type `RLMClientResetAfterBlock`.
+
+### Breaking Changes
+
+* Xcode 13.2 is no longer supported when building with Async/Await functions. Use
+  Xcode 13.3 to build with Async/Await functionality.
+
+### Fixed
+
+* Adding a Realm Object to a `ObservedResults` or a collections using
+  `StateRealmObject` that is managed by the same Realm would throw if the
+  Object was frozen and not thawed before hand.
+* Setting a Realm Configuration for @ObservedResults using it's initializer
+  would be overrode by the Realm Configuration stored in
+  `.environment(\.realmConfiguration, ...)` if they did not match
+  ([Cocoa #7463](https://github.com/realm/realm-swift/issues/7463), since v10.6.0).
+* Fix searchable component filter overriding the initial filter on `@ObservedResults`, (since v10.23.0).
+* Comparing `Results`, `LinkingObjects` or `AnyRealmCollection` when using Realm via XCFramework 
+  would result in compile time errors ([Cocoa #7615](https://github.com/realm/realm-swift/issues/7615), since v10.21.0)
+* Opening an encrypted Realm while the keychain is locked on macOS would crash
+  ([#7438](https://github.com/realm/realm-swift/issues/7438)).
+* Updating subscriptions while refreshing the access token would crash
+  ([Core #5343](https://github.com/realm/realm-core/issues/5343), since v10.22.0)
+* Fix several race conditions in `SyncSession` related to setting
+  `customRequestHeaders` while using the `SyncSession` on a different thread.
+
+### Compatibility
+
+* Realm Studio: 11.0.0 or later.
+* APIs are backwards compatible with all previous releases in the 10.x.y series.
+* Carthage release for Swift is built with Xcode 13.3.
+* CocoaPods: 1.10 or later.
+* Xcode: 12.4-13.3.
+
+### Internal
+
+* Upgraded realm-core from v11.12.0 to v11.13.0
+
 10.24.2 Release notes (2022-03-18)
 =============================================================
 

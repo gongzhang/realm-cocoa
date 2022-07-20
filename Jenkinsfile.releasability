@@ -1,10 +1,10 @@
-xcodeVersions = ['12.4', '12.5.1', '13.1', '13.2.1', '13.3']
+xcodeVersions = ['13.1', '13.2.1', '13.3.1', '13.4']
 platforms = ['osx', 'ios', 'watchos', 'tvos', 'catalyst']
 carthagePlatforms = ['osx', 'ios', 'watchos', 'tvos']
 platformNames = ['osx': 'macOS', 'ios': 'iOS', 'watchos': 'watchOS', 'tvos': 'tvOS', 'catalyst': 'Catalyst']
-carthageXcodeVersion = '13.3'
-objcXcodeVersion = '12.4'
-docsSwiftVersion = '5.5.1'
+carthageXcodeVersion = '13.4'
+objcXcodeVersion = '13.1'
+docsSwiftVersion = '5.6'
 
 def installationTest(platform, test, language) {
   return {
@@ -30,6 +30,22 @@ def installationTest(platform, test, language) {
       fi
 
       ./build.sh test-${platform}-${language}-${test}
+      """
+    }
+  }
+}
+
+def xcframeworkEvolutionTest() {
+  return {
+    node('osx') {
+      deleteDir()
+      unstash 'source'
+
+      sh """
+      hostname
+      export REALM_XCODE_OLDEST_VERSION=${xcodeVersions.first()}
+      export REALM_XCODE_LATEST_VERSION=${xcodeVersions.last()}
+      ./build.sh verify-xcframework-evolution-mode
       """
     }
   }
@@ -319,6 +335,7 @@ def doBuild() {
     }
 
     parallelBuilds["Installation - Mac Catalyst Swift CocoaPods"] = installationTest('catalyst', 'cocoapods', 'swift')
+    parallelBuilds["Installation - iOS XCFramework Evolution"] = xcframeworkEvolutionTest()
 
     parallel parallelBuilds
   }

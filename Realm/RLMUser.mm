@@ -23,7 +23,6 @@
 #import "RLMBSON_Private.hpp"
 #import "RLMCredentials_Private.hpp"
 #import "RLMMongoClient_Private.hpp"
-#import "RLMRealmConfiguration+Sync.h"
 #import "RLMSyncConfiguration_Private.hpp"
 #import "RLMSyncSession_Private.hpp"
 #import "RLMUtil.hpp"
@@ -82,9 +81,27 @@ using namespace realm;
 }
 
 - (RLMRealmConfiguration *)configurationWithPartitionValue:(nullable id<RLMBSON>)partitionValue {
+    return [self configurationWithPartitionValue:partitionValue clientResetMode:RLMClientResetModeManual];
+}
+
+- (RLMRealmConfiguration *)configurationWithPartitionValue:(nullable id<RLMBSON>)partitionValue
+                                           clientResetMode:(RLMClientResetMode)clientResetMode {
+    return [self configurationWithPartitionValue:partitionValue
+                                 clientResetMode:clientResetMode
+                               notifyBeforeReset:nil
+                                notifyAfterReset:nil];
+}
+
+- (RLMRealmConfiguration *)configurationWithPartitionValue:(nullable id<RLMBSON>)partitionValue
+                                           clientResetMode:(RLMClientResetMode)clientResetMode
+                                         notifyBeforeReset:(nullable RLMClientResetBeforeBlock)beforeResetBlock
+                                          notifyAfterReset:(nullable RLMClientResetAfterBlock)afterResetBlock {
     auto syncConfig = [[RLMSyncConfiguration alloc] initWithUser:self
                                                   partitionValue:partitionValue
-                                                      stopPolicy:RLMSyncStopPolicyAfterChangesUploaded];
+                                                      stopPolicy:RLMSyncStopPolicyImmediately
+                                                 clientResetMode:clientResetMode
+                                               notifyBeforeReset:beforeResetBlock
+                                                notifyAfterReset:afterResetBlock];
     RLMRealmConfiguration *config = [[RLMRealmConfiguration alloc] init];
     config.syncConfiguration = syncConfig;
     return config;
@@ -122,7 +139,7 @@ using namespace realm;
         return "";
     }
 
-    SyncConfig config(_user, "");
+    SyncConfig config(_user, value);
     auto path = _user->sync_manager()->path_for_realm(config, value);
     if ([NSFileManager.defaultManager fileExistsAtPath:@(path.c_str())]) {
         return path;

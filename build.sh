@@ -158,8 +158,8 @@ build_combined() {
     local xcframework_path="$out_path/$module_name.xcframework"
 
     # Build for each platform
-    xc -scheme "$scheme" -configuration "$config" -sdk "$os" build
-    xc -scheme "$scheme" -configuration "$config" -sdk "$simulator" build ONLY_ACTIVE_ARCH=NO
+    xc -scheme "$scheme" -configuration "$config" -sdk "$os" build ENABLE_BITCODE=NO
+    xc -scheme "$scheme" -configuration "$config" -sdk "$simulator" build ONLY_ACTIVE_ARCH=NO ENABLE_BITCODE=NO
 
     # Create the xcframework
     rm -rf "$xcframework_path"

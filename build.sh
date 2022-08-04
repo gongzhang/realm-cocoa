@@ -427,7 +427,7 @@ case "$COMMAND" in
     "xcframework")
         # Build all of the requested frameworks
         shift
-        PLATFORMS="${*:-osx ios watchos tvos catalyst}"
+        PLATFORMS="${*:-osx ios watchos catalyst}"
         for platform in $PLATFORMS; do
             sh build.sh "$platform-swift"
         done

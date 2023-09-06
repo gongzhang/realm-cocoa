@@ -150,10 +150,10 @@ public extension App {
 }
 
 /// Use this delegate to be provided a callback once authentication has succeed or failed
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 public typealias ASLoginDelegate = RLMASLoginDelegate
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 extension App {
     /**
      Sets the ASAuthorizationControllerDelegate to be handled by `App`
@@ -181,7 +181,7 @@ extension App {
 import Combine
 
 /// :nodoc:
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
 @frozen public struct AppSubscription: Subscription {
     private let app: App
     private let token: RLMAppSubscriptionToken
@@ -209,7 +209,7 @@ import Combine
 }
 
 /// :nodoc:
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
 public struct AppPublisher: Publisher {
     /// This publisher cannot fail.
     public typealias Failure = Never
@@ -245,7 +245,7 @@ public struct AppPublisher: Publisher {
     }
 }
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
 extension App: ObservableObject {
     /// A publisher that emits Void each time the app changes.
     ///
@@ -255,7 +255,7 @@ extension App: ObservableObject {
     }
 }
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
 public extension EmailPasswordAuth {
     /**
      Registers a new email identity with the username/password provider,
@@ -392,7 +392,7 @@ public extension EmailPasswordAuth {
     }
 }
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
 public extension APIKeyAuth {
     /**
      Creates a user API key that can be used to authenticate as the current user.
@@ -472,7 +472,7 @@ public extension APIKeyAuth {
     }
 }
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
 public extension App {
     /// Login to a user for the Realm app.
     /// @param credentials The credentials identifying the user.
@@ -482,7 +482,7 @@ public extension App {
     }
 }
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
 public extension PushClient {
     /// Request to register device token to the server
     /// @param token device token

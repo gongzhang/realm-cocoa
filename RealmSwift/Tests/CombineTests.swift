@@ -29,7 +29,7 @@ class CombineIdentifiableEmbeddedObject: EmbeddedObject, ObjectKeyIdentifiable {
     @objc dynamic var value = 0
 }
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 extension Publisher {
     public func signal(_ semaphore: DispatchSemaphore) -> Publishers.HandleEvents<Self> {
         self.handleEvents(receiveOutput: { _ in semaphore.signal() })
@@ -41,7 +41,7 @@ extension Publisher {
 // results in a warning about it being redundant due to the enclosing check, so
 // it needs to be out of line.
 func hasCombine() -> Bool {
-    if #available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *) {
+    if #available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *) {
         return true
     }
     return false
@@ -93,7 +93,7 @@ class ObjectIdentifiableTests: TestCase {
     }
 }
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 class CombinePublisherTestCase: TestCase {
     var realm: Realm!
     var cancellable: AnyCancellable?
@@ -129,7 +129,7 @@ class CombinePublisherTestCase: TestCase {
     }
 }
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 class CombineRealmTests: CombinePublisherTestCase {
     func testWillChangeLocalWrite() {
         var called = false
@@ -197,7 +197,7 @@ class CombineRealmTests: CombinePublisherTestCase {
 
 // MARK: - Object
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 class CombineObjectPublisherTests: CombinePublisherTestCase {
     var obj: SwiftIntObject!
 
@@ -759,7 +759,7 @@ private protocol CombineTestCollection {
 
 // MARK: - List, MutableSet
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 private class CombineCollectionPublisherTests<Collection: RealmCollection>: CombinePublisherTestCase
         where Collection: CombineTestCollection, Collection: RealmSubscribable {
     var collection: Collection!
@@ -1387,7 +1387,7 @@ extension Results: CombineTestCollection where Element == SwiftObject {
     }
 }
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 class ResultsPublisherTests: TestCase {
     override class var defaultTestSuite: XCTestSuite {
         return CombineCollectionPublisherTests<Results<SwiftObject>>.testSuite("Results")
@@ -1417,7 +1417,7 @@ extension List: CombineTestCollection where Element == SwiftObject {
 }
 
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 class ManagedListPublisherTests: TestCase {
     override class var defaultTestSuite: XCTestSuite {
         return CombineCollectionPublisherTests<List<SwiftObject>>.testSuite("List")
@@ -1446,7 +1446,7 @@ extension MutableSet: CombineTestCollection where Element == SwiftObject {
     }
 }
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 class ManagedMutableSetPublisherTests: TestCase {
     override class var defaultTestSuite: XCTestSuite {
         return CombineCollectionPublisherTests<MutableSet<SwiftObject>>.testSuite("MutableSet")
@@ -1475,7 +1475,7 @@ extension LinkingObjects: CombineTestCollection where Element == SwiftOwnerObjec
     }
 }
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 class LinkingObjectsPublisherTests: TestCase {
     override class var defaultTestSuite: XCTestSuite {
         return CombineCollectionPublisherTests<LinkingObjects<SwiftOwnerObject>>.testSuite("LinkingObjects")
@@ -1504,7 +1504,7 @@ extension AnyRealmCollection: CombineTestCollection where Element == SwiftObject
     }
 }
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 class AnyRealmCollectionPublisherTests: TestCase {
     override class var defaultTestSuite: XCTestSuite {
         return CombineCollectionPublisherTests<AnyRealmCollection<SwiftObject>>.testSuite("AnyRealmCollection")
@@ -1513,7 +1513,7 @@ class AnyRealmCollectionPublisherTests: TestCase {
 
 // MARK: - Map
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 private class CombineMapPublisherTests<Collection: RealmKeyedCollection>: CombinePublisherTestCase
         where Collection: CombineTestCollection, Collection: RealmSubscribable {
     var collection: Collection!
@@ -2141,7 +2141,7 @@ extension Map: CombineTestCollection where Key == String, Value == SwiftObject? 
     }
 }
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 class ManagedMapPublisherTests: TestCase {
     override class var defaultTestSuite: XCTestSuite {
         return CombineMapPublisherTests<Map<String, SwiftObject?>>.testSuite("Map")
@@ -2150,20 +2150,20 @@ class ManagedMapPublisherTests: TestCase {
 
 // MARK: - Projection
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 extension SimpleObject: ObjectKeyIdentifiable {
 }
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 extension SimpleProjection: ObjectKeyIdentifiable {
 }
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 public final class AltSimpleProjection: Projection<SimpleObject>, ObjectKeyIdentifiable {
     @Projected(\SimpleObject.int) var int
 }
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 class CombineProjectionPublisherTests: CombinePublisherTestCase {
 
     var object: SimpleObject!
@@ -2772,7 +2772,7 @@ class CombineProjectionPublisherTests: CombinePublisherTestCase {
     }
 }
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 class CombineAsyncRealmTests: CombinePublisherTestCase {
     func testWillChangeLocalWrite() {
         let asyncWriteExpectation = expectation(description: "Should complete async write")

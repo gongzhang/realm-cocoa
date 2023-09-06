@@ -162,7 +162,7 @@ public typealias AsyncTransactionId = RLMAsyncTransactionId
      - returns: A publisher. If the Realm was successfully opened, it will be received by the subscribers.
                 Otherwise, a `Swift.Error` describing what went wrong will be passed upstream instead.
      */
-    @available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+    @available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
     public static func asyncOpen(configuration: Realm.Configuration = .defaultConfiguration) -> RealmPublishers.AsyncOpenPublisher {
         return RealmPublishers.AsyncOpenPublisher(configuration: configuration)
     }

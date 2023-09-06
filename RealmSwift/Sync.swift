@@ -396,7 +396,7 @@ public struct FunctionCallable {
     ///        // Returned value from function
     ///     })
     ///
-    @available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
+    @available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
     public func dynamicallyCall(withArguments args: [[AnyBSON]]) -> Future<AnyBSON, Error> {
         return Future<AnyBSON, Error> { promise in
             let objcArgs = args.first!.map(ObjectiveCSupport.convertBson)
@@ -702,7 +702,7 @@ extension Realm {
 }
 
 #if !((os(iOS) || os(visionOS)) && (arch(i386) || arch(arm)))
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
 public extension User {
     /// Refresh a user's custom data. This will, in effect, refresh the user's auth session.
     /// @returns A publisher that eventually return `Dictionary` with user's data or `Error`.
@@ -769,7 +769,7 @@ public extension User {
 }
 
 /// :nodoc:
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
 @frozen public struct UserSubscription: Subscription {
     private let user: User
     private let token: RLMUserSubscriptionToken
@@ -797,7 +797,7 @@ public extension User {
 }
 
 /// :nodoc:
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
 public class UserPublisher: Publisher {
     /// This publisher cannot fail.
     public typealias Failure = Never
@@ -820,7 +820,7 @@ public class UserPublisher: Publisher {
     }
 }
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
 extension User: ObservableObject {
     /// A publisher that emits Void each time the user changes.
     ///

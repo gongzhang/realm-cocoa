@@ -966,7 +966,7 @@ private class ChangeEventDelegateProxy: RLMChangeEventDelegate {
 #if !((os(iOS) || os(visionOS)) && (arch(i386) || arch(arm)))
 import Combine
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 extension Publishers {
     class WatchSubscription<S: Subscriber>: ChangeEventDelegate, Subscription where S.Input == AnyBSON, S.Failure == Error {
         private let collection: MongoCollection
@@ -1094,7 +1094,7 @@ extension Publishers {
     }
 }
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
 extension MongoCollection {
     /// Creates a publisher that emits a AnyBSON change event each time the MongoDB collection changes.
     ///
@@ -1118,7 +1118,7 @@ extension MongoCollection {
     }
 }
 
-@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
 public extension MongoCollection {
     /// Encodes the provided value to BSON and inserts it. If the value is missing an identifier, one will be
     /// generated for it.

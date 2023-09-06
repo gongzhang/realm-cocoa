@@ -25,7 +25,10 @@ copy_core() {
 
 tries_left=3
 readonly version="$REALM_CORE_VERSION"
-readonly url="${REALM_BASE_URL}/core/realm-monorepo-xcframework-v${version}.tar.xz"
+# readonly url="${REALM_BASE_URL}/core/realm-monorepo-xcframework-v${version}.tar.xz"
+
+echo "NOTE: Downloading custom realm-core from 'gongzhang/realm-core'..."
+readonly url="https://github.com/gongzhang/realm-core/releases/download/v$version/realm-core-xcframework.tar.xz"
 
 # First check if we need to do anything
 if [ -e "$dst" ]; then

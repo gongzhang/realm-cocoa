@@ -145,6 +145,8 @@ build_combined() {
         os_name="ios"
     elif [[ "$os" == "watchos"  ]]; then
         os_name="$os"
+    elif [[ "$os" == "xros"  ]]; then
+        os_name="xros"
     elif [[ "$os" == "appletvos"  ]]; then
         os_name="tvos"
     fi

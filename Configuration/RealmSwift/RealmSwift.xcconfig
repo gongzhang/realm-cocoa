@@ -1,4 +1,6 @@
-SUPPORTED_PLATFORMS = macosx iphonesimulator iphoneos watchsimulator watchos appletvos appletvsimulator;
+SUPPORTED_PLATFORMS = macosx iphonesimulator iphoneos watchsimulator watchos appletvos appletvsimulator xros xrsimulator;
+TARGETED_DEVICE_FAMILY = 1,2,3,4,7;
+
 APPLICATION_EXTENSION_API_ONLY = YES;
 SKIP_INSTALL = YES;
 

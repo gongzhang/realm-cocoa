@@ -19,7 +19,7 @@
 import Realm
 import Realm.Private
 
-#if !(os(iOS) && (arch(i386) || arch(arm)))
+#if !((os(iOS) || os(visionOS)) && (arch(i386) || arch(arm)))
 import Combine
 #endif
 
@@ -387,7 +387,7 @@ public struct FunctionCallable {
     fileprivate let name: String
     fileprivate let user: User
 
-    #if !(os(iOS) && (arch(i386) || arch(arm)))
+    #if !((os(iOS) || os(visionOS)) && (arch(i386) || arch(arm)))
     /// The implementation of @dynamicCallable that allows  for `Future<AnyBSON, Error>` callable return.
     ///
     ///     let cancellable = user.functions.sum([1, 2, 3, 4, 5])
@@ -701,7 +701,7 @@ extension Realm {
     }
 }
 
-#if !(os(iOS) && (arch(i386) || arch(arm)))
+#if !((os(iOS) || os(visionOS)) && (arch(i386) || arch(arm)))
 @available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
 public extension User {
     /// Refresh a user's custom data. This will, in effect, refresh the user's auth session.

@@ -203,6 +203,8 @@ static NSDictionary *RLMAnalyticsPayload() {
                      @"Target OS Type": @"tvos",
 #elif TARGET_OS_IPHONE
                      @"Target OS Type": @"ios",
+#elif TARGET_OS_VISION
+                     @"Target OS Type": @"xros",
 #else
                      @"Target OS Type": @"osx",
 #endif

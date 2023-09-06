@@ -359,10 +359,22 @@ case "$COMMAND" in
         exit 0
         ;;
 
+    "xros-dynamic")
+        build_combined Realm Realm xros xrsimulator
+        exit 0
+        ;;
+
     "ios-swift")
         sh build.sh ios-dynamic
         build_combined RealmSwift RealmSwift iphoneos iphonesimulator '' "/swift-$REALM_XCODE_VERSION"
         copy_realm_framework ios
+        exit 0
+        ;;
+
+    "xros-swift")
+        sh build.sh xros-dynamic
+        build_combined RealmSwift RealmSwift xros xrsimulator '' "/swift-$REALM_XCODE_VERSION"
+        copy_realm_framework xros
         exit 0
         ;;
 
@@ -427,7 +439,7 @@ case "$COMMAND" in
     "xcframework")
         # Build all of the requested frameworks
         shift
-        PLATFORMS="${*:-osx ios watchos catalyst}"
+        PLATFORMS="${*:-osx ios watchos catalyst xros}"
         for platform in $PLATFORMS; do
             sh build.sh "$platform-swift"
         done

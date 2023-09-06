@@ -177,7 +177,7 @@ extension App {
     }
 }
 
-#if !(os(iOS) && (arch(i386) || arch(arm)))
+#if !((os(iOS) || os(visionOS)) && (arch(i386) || arch(arm)))
 import Combine
 
 /// :nodoc:

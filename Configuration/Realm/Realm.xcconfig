@@ -1,5 +1,5 @@
-SUPPORTED_PLATFORMS = macosx iphoneos iphonesimulator watchos watchsimulator appletvos appletvsimulator;
-TARGETED_DEVICE_FAMILY = 1,2,3,4;
+SUPPORTED_PLATFORMS = macosx iphoneos iphonesimulator watchos watchsimulator appletvos appletvsimulator xros xrsimulator;
+TARGETED_DEVICE_FAMILY = 1,2,3,4,7;
 
 INFOPLIST_FILE = Realm/Realm-Info.plist;
 MODULEMAP_FILE = $(SRCROOT)/Realm/Realm.modulemap;
@@ -21,8 +21,10 @@ HEADER_SEARCH_PATHS = $(inherited) $(DERIVED_FILE_DIR);
 ENABLE_BITCODE[sdk=iphone*] = YES;
 ENABLE_BITCODE[sdk=watch*] = YES;
 ENABLE_BITCODE[sdk=appletv*] = YES;
+ENABLE_BITCODE[sdk=xr*] = YES;
 
 LD_RUNPATH_SEARCH_PATHS[sdk=macosx*] = $(inherited) @executable_path/../Frameworks @loader_path/../Frameworks;
 LD_RUNPATH_SEARCH_PATHS[sdk=iphone*] = $(inherited) @executable_path/Frameworks @loader_path/Frameworks;
 LD_RUNPATH_SEARCH_PATHS[sdk=watch*] = $(inherited) @executable_path/Frameworks @loader_path/Frameworks;
 LD_RUNPATH_SEARCH_PATHS[sdk=appletv*] = $(inherited) @executable_path/Frameworks @loader_path/Frameworks;
+LD_RUNPATH_SEARCH_PATHS[sdk=xr*] = $(inherited) @executable_path/Frameworks @loader_path/Frameworks;

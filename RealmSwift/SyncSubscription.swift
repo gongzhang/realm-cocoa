@@ -20,7 +20,7 @@ import Foundation
 import Realm
 import Realm.Private
 
-#if !(os(iOS) && (arch(i386) || arch(arm)))
+#if !((os(iOS) || os(visionOS)) && (arch(i386) || arch(arm)))
 import Combine
 #endif
 
@@ -485,7 +485,7 @@ extension SyncSubscriptionSet {
 }
 #endif // swift(>=5.6)
 
-#if !(os(iOS) && (arch(i386) || arch(arm)))
+#if !((os(iOS) || os(visionOS)) && (arch(i386) || arch(arm)))
 @available(macOS 10.15, iOS 13, tvOS 13, watchOS 6, *)
 extension SyncSubscriptionSet {
     /**

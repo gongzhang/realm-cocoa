@@ -144,7 +144,7 @@ public typealias AsyncTransactionId = RLMAsyncTransactionId
         }))
     }
 
-    #if !(os(iOS) && (arch(i386) || arch(arm)))
+    #if !((os(iOS) || os(visionOS)) && (arch(i386) || arch(arm)))
     /**
      Asynchronously open a Realm and deliver it to a block on the given queue.
 

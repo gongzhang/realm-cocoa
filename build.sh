@@ -159,6 +159,12 @@ build_combined() {
     local out_path="build/$os_name$scope_suffix$version_suffix"
     local xcframework_path="$out_path/$module_name.xcframework"
 
+    # 保存原始的DEVELOPER_DIR值
+    local original_developer_dir="${DEVELOPER_DIR}"
+    if [ "$os" == 'xros' ]; then
+        export DEVELOPER_DIR="/Applications/Xcode-beta.app/Contents/Developer"
+    fi
+
     # Build for each platform
     xc -scheme "$scheme" -configuration "$config" -sdk "$os" build ENABLE_BITCODE=NO
     xc -scheme "$scheme" -configuration "$config" -sdk "$simulator" build ONLY_ACTIVE_ARCH=NO ENABLE_BITCODE=NO
@@ -167,6 +173,9 @@ build_combined() {
     rm -rf "$xcframework_path"
     xcodebuild -create-xcframework -allow-internal-distribution -output "$xcframework_path" \
         -framework "$os_path" -framework "$simulator_path"
+
+    # 恢复原始的DEVELOPER_DIR值
+    export DEVELOPER_DIR="${original_developer_dir}"
 }
 
 copy_realm_framework() {
@@ -451,10 +460,10 @@ case "$COMMAND" in
         find build/DerivedData/Realm/Build/Products -name 'Realm.framework' \
             | grep -v '\-static' \
             | sed 's/.*/-framework &/' \
-            | xargs xcodebuild -create-xcframework -allow-internal-distribution -output build/Realm.xcframework
+            | DEVELOPER_DIR="/Applications/Xcode-beta.app/Contents/Developer" xargs xcodebuild -create-xcframework -allow-internal-distribution -output build/Realm.xcframework
         find build/DerivedData/Realm/Build/Products -name 'RealmSwift.framework' \
             | sed 's/.*/-framework &/' \
-            | xargs xcodebuild -create-xcframework -allow-internal-distribution -output build/RealmSwift.xcframework
+            | DEVELOPER_DIR="/Applications/Xcode-beta.app/Contents/Developer" xargs xcodebuild -create-xcframework -allow-internal-distribution -output build/RealmSwift.xcframework
 
         # Because we have a module named Realm and a type named Realm we need to manually resolve the naming
         # collisions that are happening. These collisions create a red herring which tells the user the xcframework

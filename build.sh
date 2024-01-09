@@ -160,10 +160,10 @@ build_combined() {
     local xcframework_path="$out_path/$module_name.xcframework"
 
     # 保存原始的DEVELOPER_DIR值
-    local original_developer_dir="${DEVELOPER_DIR}"
-    if [ "$os" == 'xros' ]; then
-        export DEVELOPER_DIR="/Applications/Xcode-beta.app/Contents/Developer"
-    fi
+    # local original_developer_dir="${DEVELOPER_DIR}"
+    # if [ "$os" == 'xros' ]; then
+    #     export DEVELOPER_DIR="/Applications/Xcode-beta.app/Contents/Developer"
+    # fi
 
     # Build for each platform
     xc -scheme "$scheme" -configuration "$config" -sdk "$os" build ENABLE_BITCODE=NO
@@ -175,7 +175,7 @@ build_combined() {
         -framework "$os_path" -framework "$simulator_path"
 
     # 恢复原始的DEVELOPER_DIR值
-    export DEVELOPER_DIR="${original_developer_dir}"
+    # export DEVELOPER_DIR="${original_developer_dir}"
 }
 
 copy_realm_framework() {
@@ -460,10 +460,10 @@ case "$COMMAND" in
         find build/DerivedData/Realm/Build/Products -name 'Realm.framework' \
             | grep -v '\-static' \
             | sed 's/.*/-framework &/' \
-            | DEVELOPER_DIR="/Applications/Xcode-beta.app/Contents/Developer" xargs xcodebuild -create-xcframework -allow-internal-distribution -output build/Realm.xcframework
+            | xargs xcodebuild -create-xcframework -allow-internal-distribution -output build/Realm.xcframework
         find build/DerivedData/Realm/Build/Products -name 'RealmSwift.framework' \
             | sed 's/.*/-framework &/' \
-            | DEVELOPER_DIR="/Applications/Xcode-beta.app/Contents/Developer" xargs xcodebuild -create-xcframework -allow-internal-distribution -output build/RealmSwift.xcframework
+            | xargs xcodebuild -create-xcframework -allow-internal-distribution -output build/RealmSwift.xcframework
 
         # Because we have a module named Realm and a type named Realm we need to manually resolve the naming
         # collisions that are happening. These collisions create a red herring which tells the user the xcframework

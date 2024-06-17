@@ -246,7 +246,7 @@ public struct AppPublisher: Publisher {
 }
 
 @available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
-extension App: ObservableObject {
+extension App: @retroactive ObservableObject {
     /// A publisher that emits Void each time the app changes.
     ///
     /// Despite the name, this actually emits *after* the app has changed.

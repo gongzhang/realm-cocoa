@@ -434,14 +434,14 @@ case "$COMMAND" in
 
     "catalyst")
         export REALM_SDKROOT=iphoneos
-        xc -scheme Realm -configuration "$CONFIGURATION" -destination variant='Mac Catalyst'
+        xc -scheme Realm -configuration "$CONFIGURATION" -destination "generic/platform=macOS,variant=Mac Catalyst"
         clean_retrieve "build/DerivedData/Realm/Build/Products/$CONFIGURATION-maccatalyst/Realm.framework" "build/catalyst" "Realm.framework"
         ;;
 
     "catalyst-swift")
         sh build.sh catalyst
         export REALM_SDKROOT=iphoneos
-        xc -scheme 'RealmSwift' -configuration "$CONFIGURATION" -destination variant='Mac Catalyst' build
+        xc -scheme 'RealmSwift' -configuration "$CONFIGURATION" -destination "generic/platform=macOS,variant=Mac Catalyst" build
         destination="build/catalyst/swift-$REALM_XCODE_VERSION"
         clean_retrieve "build/DerivedData/Realm/Build/Products/$CONFIGURATION-maccatalyst/RealmSwift.framework" "$destination" "RealmSwift.framework"
         clean_retrieve "build/catalyst/Realm.framework" "$destination" "Realm.framework"

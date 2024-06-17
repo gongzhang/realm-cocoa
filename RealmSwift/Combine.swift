@@ -541,7 +541,7 @@ extension Realm {
 // MARK: - Object
 
 @available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
-extension Object: ObservableObject {
+extension Object: @retroactive ObservableObject {
     /// A publisher that emits Void each time the object changes.
     ///
     /// Despite the name, this actually emits *after* the object has changed.
@@ -550,7 +550,7 @@ extension Object: ObservableObject {
     }
 }
 @available(OSX 10.15, watchOS 6.0, iOS 13.0, OSXApplicationExtension 10.15, tvOS 13.0, *)
-extension EmbeddedObject: ObservableObject {
+extension EmbeddedObject: @retroactive ObservableObject {
     /// A publisher that emits Void each time the object changes.
     ///
     /// Despite the name, this actually emits *after* the embedded object has changed.

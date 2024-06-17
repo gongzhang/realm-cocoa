@@ -73,6 +73,11 @@ test_xcode_for_swift_version() {
     local required_version=$2
 
     for swift in "$path"/Toolchains/*.xctoolchain/usr/bin/swift; do
+        # NOTE: allow using 5.5 mode in swift 6
+        if [[ $(get_swift_version "$swift") == 6.* && $required_version == 5.5 ]]; then
+            return 0
+        fi
+
         if [ "$(get_swift_version "$swift")" = "$required_version" ]; then
             return 0
         fi
@@ -166,6 +171,11 @@ set_xcode_and_swift_versions() {
 
     REALM_XCODE_VERSION="$(get_xcode_version "$DEVELOPER_DIR/usr/bin/xcodebuild")"
     export REALM_XCODE_VERSION
+
+    # NOTE: if xcode version is 16, then we keep using Swift 5.5
+    if [[ $REALM_XCODE_VERSION == 16.* ]]; then
+        REALM_SWIFT_VERSION=5.5
+    fi
 
     if [ -z "$REALM_SWIFT_VERSION" ]; then
         REALM_SWIFT_VERSION=$(get_swift_version "$(xcrun -f swift)")

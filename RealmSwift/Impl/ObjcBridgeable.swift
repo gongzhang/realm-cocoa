@@ -184,7 +184,7 @@ extension AnyRealmCollection: _ObjcBridgeable {}
 extension List: _ObjcBridgeable {}
 extension MutableSet: _ObjcBridgeable {}
 
-extension RLMSwiftCollectionBase: Equatable {
+extension RLMSwiftCollectionBase: @retroactive Equatable {
     public static func == (lhs: RLMSwiftCollectionBase, rhs: RLMSwiftCollectionBase) -> Bool {
         return lhs.isEqual(rhs)
     }

@@ -31,4 +31,6 @@ codesign --timestamp -v --sign "$IDENTITY" RealmSwift.xcframework
 cd ..
 
 open build
+echo "Remember to upload the Carthage.xcframework.zip to the release page:"
+echo "  https://github.com/gongzhang/realm-cocoa/releases"
 echo "Done."

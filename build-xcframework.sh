@@ -7,6 +7,7 @@ IDENTITY=$(security find-identity|grep -A 1 "Valid identities only"|head -n 2|ta
 echo "Build Realm XCframework"
 echo "DEVELOPER_DIR=$DEVELOPER_DIR"
 echo "IDENTITY=$IDENTITY"
+cat dependencies.list
 echo "Do you want to continue? (y/n)"
 read -r answer
 case $answer in

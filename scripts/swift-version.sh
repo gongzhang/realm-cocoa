@@ -177,6 +177,11 @@ set_xcode_and_swift_versions() {
         REALM_SWIFT_VERSION=5.5
     fi
 
+    # NOTE: still using Swift 5.5 for Xcode 26.0
+    if [[ $REALM_XCODE_VERSION == 26.* ]]; then
+        REALM_SWIFT_VERSION=5.5
+    fi
+
     if [ -z "$REALM_SWIFT_VERSION" ]; then
         REALM_SWIFT_VERSION=$(get_swift_version "$(xcrun -f swift)")
     fi

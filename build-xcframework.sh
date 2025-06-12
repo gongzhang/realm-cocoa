@@ -1,10 +1,15 @@
 #!/bin/zsh
 set -e
 
+source "./scripts/swift-version.sh"
+set_xcode_and_swift_versions
+
 # find the first valid codesign identity
 IDENTITY=$(security find-identity|grep -A 1 "Valid identities only"|head -n 2|tail -n 1|awk -F '"' '{print $2}')
 
 echo "Build Realm XCframework"
+echo "-----------------------"
+echo "SWIFT_VERSION=$REALM_SWIFT_VERSION"
 echo "DEVELOPER_DIR=$DEVELOPER_DIR"
 echo "IDENTITY=$IDENTITY"
 

@@ -172,7 +172,10 @@ build_combined() {
     # Create the xcframework
     rm -rf "$xcframework_path"
     xcodebuild -create-xcframework -allow-internal-distribution -output "$xcframework_path" \
-        -framework "$os_path" -framework "$simulator_path"
+        -framework "$os_path" \
+        -debug-symbols "$(pwd -P)/$os_path.dSYM" \
+        -framework "$simulator_path" \
+        -debug-symbols "$(pwd -P)/$simulator_path.dSYM"
 
     # 恢复原始的DEVELOPER_DIR值
     # export DEVELOPER_DIR="${original_developer_dir}"
@@ -457,13 +460,19 @@ case "$COMMAND" in
 
         # Assemble them into xcframeworks
         rm -rf build/*.xcframework
-        find build/DerivedData/Realm/Build/Products -name 'Realm.framework' \
-            | grep -v '\-static' \
-            | sed 's/.*/-framework &/' \
-            | xargs xcodebuild -create-xcframework -allow-internal-distribution -output build/Realm.xcframework
-        find build/DerivedData/Realm/Build/Products -name 'RealmSwift.framework' \
-            | sed 's/.*/-framework &/' \
-            | xargs xcodebuild -create-xcframework -allow-internal-distribution -output build/RealmSwift.xcframework
+        # Build Realm.xcframework with debug symbols
+        realm_args=""
+        for framework in $(find build/DerivedData/Realm/Build/Products -name 'Realm.framework' | grep -v '\-static'); do
+            realm_args="$realm_args -framework $framework -debug-symbols $(pwd -P)/$framework.dSYM"
+        done
+        xcodebuild -create-xcframework -allow-internal-distribution -output build/Realm.xcframework $realm_args
+        
+        # Build RealmSwift.xcframework with debug symbols
+        realmswift_args=""
+        for framework in $(find build/DerivedData/Realm/Build/Products -name 'RealmSwift.framework'); do
+            realmswift_args="$realmswift_args -framework $framework -debug-symbols $(pwd -P)/$framework.dSYM"
+        done
+        xcodebuild -create-xcframework -allow-internal-distribution -output build/RealmSwift.xcframework $realmswift_args
 
         # Because we have a module named Realm and a type named Realm we need to manually resolve the naming
         # collisions that are happening. These collisions create a red herring which tells the user the xcframework

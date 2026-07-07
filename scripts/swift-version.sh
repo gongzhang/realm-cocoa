@@ -172,13 +172,9 @@ set_xcode_and_swift_versions() {
     REALM_XCODE_VERSION="$(get_xcode_version "$DEVELOPER_DIR/usr/bin/xcodebuild")"
     export REALM_XCODE_VERSION
 
-    # NOTE: if xcode version is 16, then we keep using Swift 5.5
-    if [[ $REALM_XCODE_VERSION == 16.* ]]; then
-        REALM_SWIFT_VERSION=5.5
-    fi
-
-    # NOTE: still using Swift 5.5 for Xcode 26.0
-    if [[ $REALM_XCODE_VERSION == 26.* ]]; then
+    # NOTE: Keep building RealmSwift in Swift 5.5 language mode, even with
+    # newer Swift compilers.
+    if [[ $REALM_XCODE_VERSION == 16.* || $REALM_XCODE_VERSION == 26.* || $REALM_XCODE_VERSION == 27.* ]]; then
         REALM_SWIFT_VERSION=5.5
     fi
 

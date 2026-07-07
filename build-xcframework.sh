@@ -13,11 +13,10 @@ echo "SWIFT_VERSION=$REALM_SWIFT_VERSION"
 echo "DEVELOPER_DIR=$DEVELOPER_DIR"
 echo "IDENTITY=$IDENTITY"
 
-# NOTE: 注意目前仍然使用 Xcode 16.2 构建的 realm-core。
-# Xcode 16.3 构建的 realm-core 在特定 ARCH 上出现 ld 无法链接 Decimal128 的问题。
-# 从下面的问题可以确认 Xcode 16.3 对 Decimal128 做了修改：
-#   https://github.com/realm/realm-swift/pull/8754/commits/29c05f28de85594f3608c7c25c3da2accbc6b27a
-# 但 realm-core 仓库目前尚无相关议题，所以暂时使用 Xcode 16.2 构建的 realm-core。
+# NOTE: RealmSwift can be rebuilt with newer Xcodes, but the bundled realm-core
+# xcframework is the prebuilt version pinned in dependencies.list.
+# Keep dependencies.list in sync with the custom gongzhang/realm-core release
+# used by scripts/download-core.sh.
 cat dependencies.list
 echo "Do you want to continue? (y/n)"
 read -r answer
@@ -42,7 +41,7 @@ codesign --timestamp -v --sign "$IDENTITY" RealmSwift.xcframework
 7z a -mx=9 Carthage.xcframework.zip Realm.xcframework RealmSwift.xcframework
 cd ..
 
-open build
+# open build
 echo "Remember to upload the Carthage.xcframework.zip to the release page:"
 echo "  https://github.com/gongzhang/realm-cocoa/releases"
 echo "Done."

@@ -498,13 +498,18 @@ extension Projection: _ObservedResultsValue { }
     }
     /// Stores a type safe query used for filtering the Results. This is mutually exclusive
     /// to the `filter` parameter.
-    @State public var `where`: ((Query<ResultType>) -> Query<Bool>)? {
+    @State private var whereQuery: ((Query<ResultType>) -> Query<Bool>)?
+    public var `where`: ((Query<ResultType>) -> Query<Bool>)? {
         // The introduction of this property produces a compiler bug in
         // Xcode 12.5.1. So Swift Queries are supported on Xcode 13 and above
         // when used with SwiftUI.
-        willSet {
+        get {
+            whereQuery
+        }
+        set {
             storage.filter = nil
             storage.where = newValue?(Query()).predicate
+            whereQuery = newValue
         }
     }
     /// :nodoc:
